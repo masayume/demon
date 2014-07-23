@@ -58,28 +58,15 @@ EOT;
                 $planet_array = planet_gen();
 
 		if ($i>(($page - 1) * $results)) {
-
+			$img = "/demon/img/" . $planet_array[1];
 			$planet_name = strtoupper($planet_array[0]);
 			// $planet_img = "<img id=\"planet-$i\" src=\"/demon/img/" .$planet_array[1] . "\" width=\"" . $planet_array[2]. "px\">"; 
-			$planet_img 	= "<img id=\"planet-$i\" src=\"/demon/img/" .$planet_array[1] . "\" width=0 height=0 \">"; 
+			$planet_url = "/demon/img/" . $planet_array[1];
+			$planet_img = "<img id=\"planet-$i\" src=\"/demon/img/" .$planet_array[1] . "\" width=0 height=0 \">"; 
 			$width		= $planet_array[2];
+
+			echo planet($i, $planet_url, $planet_name, $width, $img);
 	
-				echo <<< EOP
-<div class="planet" style="display:inline-block; width:200px;">
-$planet_img
-<br clear="all"><p><small>$i:</small> $planet_name </p>
-<canvas id="myCanvas-$i" width="200" height="200" style="border:1px solid #d3d3d3;"> 
-<script>
-var c=document.getElementById("myCanvas-$i");
-var ctx=c.getContext("2d");
-var img=document.getElementById("planet-$i");
-ctx.drawImage(img,10,10,$width,$width);
-
-runFilter('myCanvas-$i', Filters.grayscale);
-</script>
-</div>		
-
-EOP;
 		}
 	}
 
@@ -94,6 +81,54 @@ exit(0);
 
 
 // = - = - = - = - = - = - = - = - = - = - = - = -
+
+function planet($i, $planet_url, $planet_name, $width, $img) {
+
+ 	$planet = <<< EOP
+
+<div class="planet" style="display:inline-block; width:200px;">
+<br clear="all"><p><small>$i:</small> $planet_name </p>
+    <canvas id="myCanvas-$i" width="200" height="200" style="border:1px solid #d3d3d3;"></canvas>
+    <script>
+      var canvas$i = document.getElementById('myCanvas-$i');
+      var context$i = canvas$i.getContext('2d');
+      var imageObj$i = new Image();
+      imageObj$i.onload = function() {
+  	context$i.drawImage(imageObj$i,10,10,$width,$width);
+      };
+      imageObj$i.src = '$planet_url';
+    </script>
+</div>          
+
+EOP;
+
+        return $planet;
+
+} // end function planet
+
+
+function planetOLD($i, $planet_img, $planet_name, $width, $img) {
+
+ 	$planet = <<< EOP
+<div class="planet" style="display:inline-block; width:200px;">
+$planet_img
+<br clear="all"><p><small>$i:</small> $planet_name </p>
+<canvas id="myCanvas-$i" width="200" height="200" style="border:1px solid #d3d3d3;">
+<script>
+var c=document.getElementById("myCanvas-$i");
+var ctx=c.getContext("2d");
+var img=document.getElementById("planet-$i");
+  ctx.drawImage(img,10,10,$width,$width);
+//  ctx.drawImage(img,10,10,$width,$width);
+// runFilter('myCanvas-$i', Filters.grayscale);
+</script>
+</div>          
+
+EOP;
+
+	return $planet;
+
+} // end function planet
 
 function jfunction() {
 
