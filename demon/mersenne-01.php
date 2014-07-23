@@ -2,16 +2,30 @@
 
 // TODO
 // 1) http://www.html5rocks.com/en/tutorials/canvas/imagefilters/
-// 2) paging (using page, results querystring parameters)
 
 // REF.
 // http://superpixeltime.com/
 
-parse_str($_SERVER['QUERY_STRING'], $params);
-$master_seed	= $params['seed'];
-$page 		= $params['page'];
-$results 	= $params['results'];
+// PARAMETERS
 
+parse_str($_SERVER['QUERY_STRING'], $params);
+if ($params['seed']) {
+	$master_seed	= $params['seed'];
+} else {
+	$master_seed	= 100;
+}
+$page   = 1; $nextp  = 2; $prevp  = 1; $res_qs = "";
+if ($params['page']) {
+	$page	= $params['page']; $nextp = $page+1; $prevp = $page-1;
+} else {
+	$page	= 1; $nextp	= 2; $prevp	= 1;
+}
+if (!$params['results']) {
+	$results = 25;
+} else {
+	$results = $params['results'];
+	$res_qs  = "&results=" . $results;
+}
 
 // init master seed
 mt_srand($master_seed);
@@ -19,34 +33,38 @@ mt_srand($master_seed);
 // init planet name data
 planet_ini();
 
-
+$javascript 	= jfunction();
 
 echo <<< EOT
-<html><head></head>
+<html><head>
+<title>generator</title>
 <link href='http://fonts.googleapis.com/css?family=Oswald:700' rel='stylesheet' type='text/css'>
-<style="text/css">
+<style type="text/css">
+a:link  { color:#ffffff; } 
+a:visited { color:#ffffff; } 
 </style>
+</head>
 <body style="background-color:#000000; color: #ffffff; font-family: 'Oswald', sans-serif;">
 EOT;
 
-	print "ini:" . count($planetname_ini) . "  mid:" . count($planetname_mid) ."  end:" . count($planetname_end);
+
+// navigation
+	print " NAVIGATION: " . "<a href='" .$_SERVER['PHP_SELF'] . "?seed=" . $master_seed . "&page=" . $prevp . $res_qs . "'> &lt;&lt; previous </a> ||| <a href='" . $_SERVER['PHP_SELF'] . "?seed=" . $master_seed . "&page=" .$nextp . $res_qs . "'> next >> </a>";
 
 	print "\n\n\n\n<hr><div style=\"text-align:center;\">";
-/*
-	for ($i=1; $i<=100; $i++) {
-		$planet_array = planet_gen();
-		print "\n<div class=\"planet\" style=\"display:inline-block; width:200px;\" > <img src=\"/demon/img/" . $planet_array[1] . "\" width=\"" . $planet_array[2]. "px\"><br clear=\"all\"><p><small>$i:</small> " . strtoupper($planet_array[0]) . "</p></div>"; 
-	}
-*/
-	for ($i=1; $i<=100; $i++) {
+
+	for ($i=1; $i<=$page * $results; $i++) {
+//
                 $planet_array = planet_gen();
-		$planet_name = strtoupper($planet_array[0]);
-		// $planet_img = "<img id=\"planet-$i\" src=\"/demon/img/" .$planet_array[1] . "\" width=\"" . $planet_array[2]. "px\">"; 
-		$planet_img 	= "<img id=\"planet-$i\" src=\"/demon/img/" .$planet_array[1] . "\" width=0 height=0 \">"; 
-		$javascript 	= jfunction();
-		$width		= $planet_array[2];
+
+		if ($i>(($page - 1) * $results)) {
+
+			$planet_name = strtoupper($planet_array[0]);
+			// $planet_img = "<img id=\"planet-$i\" src=\"/demon/img/" .$planet_array[1] . "\" width=\"" . $planet_array[2]. "px\">"; 
+			$planet_img 	= "<img id=\"planet-$i\" src=\"/demon/img/" .$planet_array[1] . "\" width=0 height=0 \">"; 
+			$width		= $planet_array[2];
 	
-		echo <<< EOP
+				echo <<< EOP
 <div class="planet" style="display:inline-block; width:200px;">
 $planet_img
 <br clear="all"><p><small>$i:</small> $planet_name </p>
@@ -62,10 +80,12 @@ runFilter('myCanvas-$i', Filters.grayscale);
 </div>		
 
 EOP;
+		}
 	}
 
 	print "</div><hr>";
 	print "$javascript";
+	print "ini: " . count($planetname_ini) . "  mid:" . count($planetname_mid) ."  end:" . count($planetname_end);
 	print "</body></html>";
 
 echo "\n";
@@ -239,7 +259,103 @@ function jfunction() {
           }
           return output;
         };
-</script>";
+  </script>
+  <script>
+    var img = document.getElementById('myCanvas-1');
+    img.addEventListener('load', function() {
+
+      var canvases = document.getElementsByTagName('canvas');
+      for (var i=0; i<canvases.length; i++) {
+        var c = canvases[i];
+        c.parentNode.insertBefore(img.cloneNode(true), c);
+        c.style.display = 'none';
+      }
+
+      function runFilter(id, filter, arg1, arg2, arg3) {
+        var c = document.getElementById(id);
+        var s = c.previousSibling.style;
+        var b = c.parentNode.getElementsByTagName('button')[0];
+        if (b.originalText == null) {
+          b.originalText = b.textContent;
+        }
+        if (s.display == 'none') {
+          s.display = 'inline';
+          c.style.display = 'none';
+          b.textContent = b.originalText;
+        } else {
+          var idata = Filters.filterImage(filter, img, arg1, arg2, arg3);
+          c.width = idata.width;
+          c.height = idata.height;
+          var ctx = c.getContext('2d');
+          ctx.putImageData(idata, 0, 0);
+          s.display = 'none';
+          c.style.display = 'inline';
+          b.textContent = 'Restore original image';
+        }
+      }
+
+      grayscale = function() {
+        runFilter('grayscale', Filters.grayscale);
+      }
+
+      brightness = function() {
+        runFilter('brightness', Filters.brightness, 40);
+      }
+
+      threshold = function() {
+        runFilter('threshold', Filters.threshold, 128);
+      }
+
+      sharpen = function() {
+        runFilter('sharpen', Filters.convolute,
+          [ 0, -1,  0,
+           -1,  5, -1,
+            0, -1,  0]);
+      }
+
+      blurC = function() {
+        runFilter('blurC', Filters.convolute,
+          [ 1/9, 1/9, 1/9,
+            1/9, 1/9, 1/9,
+            1/9, 1/9, 1/9 ]);
+      }
+
+      sobel = function() {
+        runFilter('sobel', function(px) {
+          px = Filters.grayscale(px);
+          var vertical = Filters.convoluteFloat32(px,
+            [-1,-2,-1,
+              0, 0, 0,
+              1, 2, 1]);
+          var horizontal = Filters.convoluteFloat32(px,
+            [-1,0,1,
+             -2,0,2,
+             -1,0,1]);
+          var id = Filters.createImageData(vertical.width, vertical.height);
+          for (var i=0; i<id.data.length; i+=4) {
+            var v = Math.abs(vertical.data[i]);
+            id.data[i] = v;
+            var h = Math.abs(horizontal.data[i]);
+            id.data[i+1] = h
+            id.data[i+2] = (v+h)/4;
+            id.data[i+3] = 255;
+          }
+          return id;
+        });
+      }
+
+      custom = function() {
+        var inputs = document.getElementById('customMatrix').getElementsByTagName('input');
+        var arr = [];
+        for (var i=0; i<inputs.length; i++) {
+          arr.push(parseFloat(inputs[i].value));
+        }
+        runFilter('custom', Filters.convolute, arr, true);
+      }
+
+    }, false);
+  </script>
+";
 
 	return $jfun;
 
