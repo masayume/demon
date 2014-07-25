@@ -175,7 +175,7 @@ function planet_gen() {
 
 // planet filter
 	$filter = "";
-        switch(mt_rand(1,8)){
+        switch(mt_rand(1,9)){
                 case 1:
 			$v1	= mt_rand(5,20);
 			$filter = ".denoise($v1)"; break;
@@ -200,6 +200,24 @@ function planet_gen() {
                 case 7:
 			$v1	= mt_rand(1,5) / 10;
 			$filter = ".ink($v1)"; break;
+                case 8:
+			$min	= 1; $max = 3;
+                        $v1a    = mt_rand($min,$max) / 10;
+                        $v1b    = mt_rand($min,$max) / 10;
+                        $v2a    = mt_rand($min,$max) / 10;
+                        $v2b    = mt_rand($min,$max) / 10;
+                        $v3a    = mt_rand($min,$max) / 10;
+                        $v3b    = mt_rand($min,$max) / 10;
+			$curves = "";
+			switch(mt_rand(1,3)){
+				case 1:
+					$curves = "[[$v1a,$v1b],[$v2a,$v2b]],[[0,0],[1,1]],[[0,0],[1,1]]"; break;
+                                case 2:
+					$curves = "[[0,0],[1,1]],[[$v1a,$v1b],[$v2a,$v2b]],[[0,0],[1,1]]"; break;
+                                case 3:
+					$curves = "[[0,0],[1,1]],[[0,0],[1,1]],[[$v1a,$v1b],[$v2a,$v2b]]"; break;
+			}
+                        $filter = ".curves($curves)"; break;
 		default;
 		
 	}
