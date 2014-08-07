@@ -1,12 +1,19 @@
 <?php
 
 // TODO
-// 1) http://www.html5rocks.com/en/tutorials/canvas/imagefilters/
+// other objects (type param)
+// planet data
+// http://stackoverflow.com/questions/667045/getpixel-from-html-canvas
+
+// DONE
+// http://www.html5rocks.com/en/tutorials/canvas/imagefilters/
 
 // REF.
 // http://superpixeltime.com/
 
 // PARAMETERS
+
+$layerdir	= "./img/demons/";
 
 parse_str($_SERVER['QUERY_STRING'], $params);
 if ($params['seed']) {
@@ -14,26 +21,35 @@ if ($params['seed']) {
 } else {
 	$master_seed	= 100;
 }
-$page   = 1; $nextp  = 2; $prevp  = 1; $res_qs = "";
+$page   = 1; $nextp  = 2; $prevp  = 1; $res_qs = ""; $type = "";
 if ($params['page']) {
 	$page	= $params['page']; $nextp = $page+1; $prevp = $page-1;
 } else {
 	$page	= 1; $nextp	= 2; $prevp	= 1;
 }
 if (!$params['results']) {
-	$results = 25;
+	$results = 12;
 } else {
 	$results = $params['results'];
-	$res_qs  = "&results=" . $results;
+	$res_qs  .= "&results=" . $results;
 }
+if (!$params['type']) {
+        $type = "planets";
+} else {
+        $type = $params['type'];
+        $res_qs  = "&type=" . $type;
+}
+
 
 // init master seed
 mt_srand($master_seed);
 
-// init planet name data
+// init planet, demon name data
 planet_ini();
+demon_ini();
 
 $javascript 	= jfunction();
+$css		= overcss();
 
 echo <<< EOT
 <html><head>
@@ -43,37 +59,78 @@ echo <<< EOT
 a:link  { color:#ffffff; } 
 a:visited { color:#ffffff; } 
 </style>
+$css
 </head>
 <body style="background-color:#000000; color: #ffffff; font-family: 'Oswald', sans-serif;">
 $javascript
 EOT;
 
 
-// navigation
-	print " NAVIGATION: " . "<a href='" .$_SERVER['PHP_SELF'] . "?seed=" . $master_seed . "&page=" . $prevp . $res_qs . "'> &lt;&lt; previous </a> ||| <a href='" . $_SERVER['PHP_SELF'] . "?seed=" . $master_seed . "&page=" .$nextp . $res_qs . "'> next >> </a>";
-
+// navigation && MAIN div
+	print " NAVIGATION: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;" . "<a href='" .$_SERVER['PHP_SELF'] . "?seed=" . $master_seed . "&page=" . $prevp . $res_qs . "'> &lt;&lt; previous </a> &nbsp;&nbsp;&nbsp; <a href='" . $_SERVER['PHP_SELF'] . "?seed=" . $master_seed . "&page=" .$nextp . $res_qs . "'> next >> </a> &nbsp;  &nbsp;  &nbsp;  &nbsp;  &nbsp; <a href='" . $_SERVER['PHP_SELF'] . "?seed=" . $master_seed . "&page=" .$nextp . "&type=planets'>PLANETS</a>  &nbsp;  &nbsp;  &nbsp;  &nbsp;  &nbsp; <a href='" . $_SERVER['PHP_SELF'] . "?seed=" . $master_seed . "&page=" .$nextp . "&type=demons'>DEMONS</a>  &nbsp;  &nbsp;  &nbsp;  &nbsp;  &nbsp; <a href='" . $_SERVER['PHP_SELF'] . "?seed=" . $master_seed . "&page=" .$nextp . "&type=backs'>BACKGROUNDS</a>"; 
 	print "\n\n\n\n<hr><div style=\"text-align:center;\">";
 
+// PLANETS
 
-// show n planets
-	for ($i=1; $i<=$page * $results; $i++) {
+	if ($type == "planets") {
+		for ($i=1; $i<=$page * $results; $i++) {
 
 // planetary values generation
-                $planet_array = planet_gen();
+	                $planet_array = planet_gen();
 
-		if ($i>(($page - 1) * $results)) {
-			$img = "/demon/img/" . $planet_array[1];
-			$planet_name = strtoupper($planet_array[0]);
-			// $planet_img = "<img id=\"planet-$i\" src=\"/demon/img/" .$planet_array[1] . "\" width=\"" . $planet_array[2]. "px\">"; 
-			$planet_url = "/demon/img/" . $planet_array[1];
-			$planet_img = "<img id=\"planet-$i\" src=\"/demon/img/" .$planet_array[1] . "\" width=0 height=0 \">"; 
-			$width		= $planet_array[2];
-			$filter		= $planet_array[3];
+			if ($i>(($page - 1) * $results)) {
+				$img = "/demon/img/" . $planet_array[1];
+				$planet_name = strtoupper($planet_array[0]);
+				// $planet_img = "<img id=\"planet-$i\" src=\"/demon/img/" .$planet_array[1] . "\" width=\"" . $planet_array[2]. "px\">"; 
+				$planet_url = "/demon/img/" . $planet_array[1];
+				$planet_img = "<img id=\"planet-$i\" src=\"/demon/img/" .$planet_array[1] . "\" width=0 height=0 \">"; 
+				$width		= $planet_array[2];
+				$filter		= $planet_array[3];
 			
-			echo planet($i, $planet_url, $planet_name, $width, $img, $filter);
-	
+				echo planet($i, $planet_url, $planet_name, $width, $img, $filter);
+			}
 		}
-	}
+	} // end planets
+
+// DEMONS 
+
+        if ($type == "demons") {
+                for ($i=1; $i<=$page * $results; $i++) {
+			$imgpath = "/demon/img/demons/" ;
+			$demon_array = demon_gen();
+
+                        if ($i>(($page - 1) * $results)) {
+
+				$demon_name 	= $demon_array[0];
+				$demon_url 	= $demon_array[1];
+				$width		= 128;
+				// echo $demon_img;
+				echo demon($i, $imgpath, $demon_url, $demon_name, $width);
+
+			}
+		}
+	} // end demons
+
+// BACKGROUNDS - background layers 
+// 	skybox
+//	skyboxfx
+// 	skyline
+//	horizon
+//	farawaybackground
+//	background
+//	nearbybackground
+//	foreground
+
+        if ($type == "backs") {
+                for ($i=1; $i<=$page * $results; $i++) {
+
+                        if ($i>(($page - 1) * $results)) {
+
+                                echo "background " . $i . " ";
+
+                        }
+                }
+        } // end backgrounds
 
 	print "</div><hr>";
 	print "ini: " . count($planetname_ini) . "  mid:" . count($planetname_mid) ."  end:" . count($planetname_end);
@@ -84,7 +141,85 @@ echo "\n";
 exit(0);
 
 
-// = - = - = - = - = - = - = - = - = - = - = - = -
+// = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = -
+// = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = -
+// = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = -
+
+function demon_layers($dir) {
+
+	$dlayers	= array();
+	$arr2ret	= array();
+	if ($handle = opendir($dir)) {
+
+	    while (false !== ($entry = readdir($handle))) {
+	        if ($entry != "." && $entry != "..") {
+	            	array_push($dlayers, $entry);
+			// echo "$entry\n";
+	        }
+	    }
+	    closedir($handle);
+	}
+
+// create various parts	
+	foreach (array("HE", "LW", "RW", "BO", "LB") as $part) {
+		$demon_elems	= array();
+		$demon_elems 	= kind_elem($part, $dlayers); // elementi di tipo "HE"... 
+
+		array_push($arr2ret, $demon_elems[(mt_rand(1,1000) % count($demon_elems))]); // carico nell'array da tornare l'rt_rnd-esimo elemento
+	}
+
+	$arr2ret[1] = $arr2ret[2]; // same right and left wing
+	$arr2ret[1] = preg_replace("/RW/", "LW", $arr2ret[1]);
+
+	return $arr2ret;
+
+} // end function demon_layers
+
+
+function kind_elem($kind, $dlayers) {
+
+	$arr2ret  = array();
+        foreach ($dlayers as $dlayer) { 
+		if (strstr($dlayer, $kind)) { array_push($arr2ret, $dlayer); } }
+	
+
+
+	return $arr2ret;
+
+} // end function rndret_elem()
+
+
+function demon($i, $imgpath, $demon_url) {
+        $demon = <<< EOP
+
+
+<div id="container" class="demon" style="display:inline-block; width:200px;">
+        <script>
+            function tracedemon$i() {
+                // window.alert("demon: $demon_name on canvas $i");   
+                var canvas$i            = fx.canvas();
+                var image$i             = document.getElementById('myImage-$i');
+                var texture$i           = canvas$i.texture(image$i);
+                var filter$i            = "canvas$i.draw(texture$i)$filter.update()"; // apply the ink filter
+                eval(filter$i);
+                image$i.parentNode.insertBefore(canvas$i, image$i);
+                image$i.parentNode.removeChild(image$i);
+            }
+        </script>
+        <div id='div0'><img id="myImage-$i-0" width="$width" height="$width" src="$imgpath$demon_url[0]" onload="tracedemon_0$i()"></div>
+        <div id='div1'><img id="myImage-$i-1" width="$width" height="$width" src="$imgpath$demon_url[1]" onload="tracedemon_1$i()"></div>
+        <div id='div2'><img id="myImage-$i-2" width="$width" height="$width" src="$imgpath$demon_url[2]" onload="tracedemon_2$i()"></div>
+        <div id='div3'><img id="myImage-$i-3" width="$width" height="$width" src="$imgpath$demon_url[3]" onload="tracedemon_3$i()"></div>
+        <div id='div4'><img id="myImage-$i-4" width="$width" height="$width" src="$imgpath$demon_url[4]" onload="tracedemon_4$i()"></div>
+        <br clear="all"><small>$i:</small> $demon_name
+        <br><small><small> $filter </small></small>
+</div>
+
+EOP;
+
+        return $demon;
+
+}
 
 function planet($i, $planet_url, $planet_name, $width, $img, $filter) {
 
@@ -114,6 +249,13 @@ EOP;
         return $planet;
 
 } // end function planet
+
+function overcss() {
+
+	$overcss = '<link rel="stylesheet" type="text/css" href="./overcss.css">';
+	return $overcss;
+
+} // end function overcss
 
 function jfunction() {
 
@@ -226,6 +368,47 @@ function planet_gen() {
 
 	return $planet;
 }
+
+function demon_ini() {
+
+        global $demonname_ini, $demonname_mid, $demonname_end, $demon_pic;
+        $demonname_ini = array("a","ve","y");
+        $demonname_mid = array("an","u","xi");
+        $demonname_end = array("a","vi","vos");
+
+} // end function demon_ini
+
+function demon_gen() {
+
+        global $demonname_ini, $demonname_mid, $demonname_end, $demon_pic, $layerdir;
+        $demon_name = "";
+        $demon = array();
+        switch(mt_rand(1,10)){
+                case 1:
+                case 2:
+                        $demon_name = $demonname_ini[(mt_rand(1,1000) % count($demonname_ini))] . $demonname_end[(mt_rand(1,1000) % count($demonname_end))];
+                break;
+                case 9:
+                case 10:
+                        $demon_name = $demonname_ini[(mt_rand(1,1000) % count($demonname_ini))] . $demonname_mid[(mt_rand(1,1000) % count($demonname_mid))] . $demonname_mid[(mt_rand(1,1000) % count($demonname_mid))] . $demonname_end[(mt_rand(1,1000) % count($demonname_end))];
+                break;
+                default:
+                        $demon_name = $demonname_ini[(mt_rand(1,1000) % count($demonname_ini))] . $demonname_mid[(mt_rand(1,1000) % count($demonname_mid))] . $demonname_end[(mt_rand(1,1000) % count($demonname_end))];
+        }
+
+// demon name
+        $demon[0]      = $demon_name;
+
+// demon pic
+        $demon[1]      = demon_layers($layerdir);
+
+
+// demon size
+        $demon[2]      = mt_rand(50,200);
+
+	return $demon;
+
+} // end function demon_gen
 
 // 
 

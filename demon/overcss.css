@@ -1,0 +1,20 @@
+#container {
+    width: 200px;
+    height: 200px;
+    position: relative;
+}
+
+#navi,#div0,#div1,#div2,#div3,#div4,#div5,#div6,#div7,#div8,
+#div9 { width: 100%; height: 100%; position: absolute; top: 100; left: 0; }
+
+#div0 { z-index: 0; }
+#div1 { z-index: 1; }
+#div2 { z-index: 2; }
+#div3 { z-index: 3; }
+#div4 { z-index: 4; }
+#div5 { z-index: 5; }
+#div6 { z-index: 6; }
+#div7 { z-index: 7; }
+#div8 { z-index: 8; }
+#div9 { z-index: 9; }
+
