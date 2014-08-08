@@ -14,6 +14,7 @@
 // PARAMETERS
 
 $layerdir	= "./img/demons/";
+$page   = 1; $nextp  = 2; $prevp  = 1; $res_qs = ""; $type = "";
 
 parse_str($_SERVER['QUERY_STRING'], $params);
 if ($params['seed']) {
@@ -21,7 +22,6 @@ if ($params['seed']) {
 } else {
 	$master_seed	= 100;
 }
-$page   = 1; $nextp  = 2; $prevp  = 1; $res_qs = ""; $type = "";
 if ($params['page']) {
 	$page	= $params['page']; $nextp = $page+1; $prevp = $page-1;
 } else {
@@ -37,7 +37,7 @@ if (!$params['type']) {
         $type = "planets";
 } else {
         $type = $params['type'];
-        $res_qs  = "&type=" . $type;
+        $res_qs  .= "&type=" . $type;
 }
 
 
@@ -65,9 +65,8 @@ $css
 $javascript
 EOT;
 
-
 // navigation && MAIN div
-	print " NAVIGATION: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;" . "<a href='" .$_SERVER['PHP_SELF'] . "?seed=" . $master_seed . "&page=" . $prevp . $res_qs . "'> &lt;&lt; previous </a> &nbsp;&nbsp;&nbsp; <a href='" . $_SERVER['PHP_SELF'] . "?seed=" . $master_seed . "&page=" .$nextp . $res_qs . "'> next >> </a> &nbsp;  &nbsp;  &nbsp;  &nbsp;  &nbsp; <a href='" . $_SERVER['PHP_SELF'] . "?seed=" . $master_seed . "&page=" .$nextp . "&type=planets'>PLANETS</a>  &nbsp;  &nbsp;  &nbsp;  &nbsp;  &nbsp; <a href='" . $_SERVER['PHP_SELF'] . "?seed=" . $master_seed . "&page=" .$nextp . "&type=demons'>DEMONS</a>  &nbsp;  &nbsp;  &nbsp;  &nbsp;  &nbsp; <a href='" . $_SERVER['PHP_SELF'] . "?seed=" . $master_seed . "&page=" .$nextp . "&type=backs'>BACKGROUNDS</a>"; 
+	print " NAVIGATION: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;" . "<a href='" .$_SERVER['PHP_SELF'] . "?seed=" . $master_seed . "&page=" . $prevp . $res_qs . "'> &lt;&lt; previous </a> &nbsp;&nbsp;&nbsp; <a href='" . $_SERVER['PHP_SELF'] . "?seed=" . $master_seed . "&page=" .$nextp . $res_qs . "'> next >> </a> &nbsp;  &nbsp;  &nbsp;  &nbsp;  &nbsp; <a href='" . $_SERVER['PHP_SELF'] . "?seed=" . $master_seed . "&page=" .$nextp . "&type=planets'>PLANETS</a>  &nbsp;  &nbsp;  &nbsp;  &nbsp;  &nbsp; <a href='" . $_SERVER['PHP_SELF'] . "?seed=" . $master_seed . "&page=" .$nextp . "&type=demons&results=3'>DEMONS</a>  &nbsp;  &nbsp;  &nbsp;  &nbsp;  &nbsp; <a href='" . $_SERVER['PHP_SELF'] . "?seed=" . $master_seed . "&page=" .$nextp . "&type=backs'>BACKGROUNDS</a>"; 
 	print "\n\n\n\n<hr><div style=\"text-align:center;\">";
 
 // PLANETS
@@ -104,8 +103,9 @@ EOT;
 				$demon_name 	= $demon_array[0];
 				$demon_url 	= $demon_array[1];
 				$width		= 128;
+				$filter		= $demon_array[3];
 				// echo $demon_img;
-				echo demon($i, $imgpath, $demon_url, $demon_name, $width);
+				echo demon($i, $imgpath, $demon_url, $demon_name, $width, $filter);
 
 			}
 		}
@@ -161,15 +161,15 @@ function demon_layers($dir) {
 	}
 
 // create various parts	
-	foreach (array("HE", "LW", "RW", "BO", "LB") as $part) {
+	foreach (array("LW", "RW", "BO", "LB", "HE") as $part) {
 		$demon_elems	= array();
 		$demon_elems 	= kind_elem($part, $dlayers); // elementi di tipo "HE"... 
 
 		array_push($arr2ret, $demon_elems[(mt_rand(1,1000) % count($demon_elems))]); // carico nell'array da tornare l'rt_rnd-esimo elemento
 	}
 
-	$arr2ret[1] = $arr2ret[2]; // same right and left wing
-	$arr2ret[1] = preg_replace("/RW/", "LW", $arr2ret[1]);
+	$arr2ret[0] = $arr2ret[1]; // same right and left wing
+	$arr2ret[0] = preg_replace("/RW/", "LW", $arr2ret[1]);
 
 	return $arr2ret;
 
@@ -189,16 +189,16 @@ function kind_elem($kind, $dlayers) {
 } // end function rndret_elem()
 
 
-function demon($i, $imgpath, $demon_url) {
+function demon($i, $imgpath, $demon_url, $demon_name, $width, $filter) {
         $demon = <<< EOP
 
-
-<div id="container" class="demon" style="display:inline-block; width:200px;">
+<div id="container" class="demon" style="display:inline-block; width:250px; background-color: #000000;">
         <script>
-            function tracedemon$i() {
+            function tracedemon_$i(n) {
                 // window.alert("demon: $demon_name on canvas $i");   
                 var canvas$i            = fx.canvas();
-                var image$i             = document.getElementById('myImage-$i');
+		var name		= 'myImage-' + $i + '-' + n;
+                var image$i             = document.getElementById(name);
                 var texture$i           = canvas$i.texture(image$i);
                 var filter$i            = "canvas$i.draw(texture$i)$filter.update()"; // apply the ink filter
                 eval(filter$i);
@@ -206,15 +206,14 @@ function demon($i, $imgpath, $demon_url) {
                 image$i.parentNode.removeChild(image$i);
             }
         </script>
-        <div id='div0'><img id="myImage-$i-0" width="$width" height="$width" src="$imgpath$demon_url[0]" onload="tracedemon_0$i()"></div>
-        <div id='div1'><img id="myImage-$i-1" width="$width" height="$width" src="$imgpath$demon_url[1]" onload="tracedemon_1$i()"></div>
-        <div id='div2'><img id="myImage-$i-2" width="$width" height="$width" src="$imgpath$demon_url[2]" onload="tracedemon_2$i()"></div>
-        <div id='div3'><img id="myImage-$i-3" width="$width" height="$width" src="$imgpath$demon_url[3]" onload="tracedemon_3$i()"></div>
-        <div id='div4'><img id="myImage-$i-4" width="$width" height="$width" src="$imgpath$demon_url[4]" onload="tracedemon_4$i()"></div>
-        <br clear="all"><small>$i:</small> $demon_name
-        <br><small><small> $filter </small></small>
+        <div id='div0'><img id="myImage-$i-0" width="$width" height="$width" src="$imgpath$demon_url[0]" onload="tracedemon_$i(0)"></div>
+        <div id='div1'><img id="myImage-$i-1" width="$width" height="$width" src="$imgpath$demon_url[1]" onload="tracedemon_$i(1)"></div>
+        <div id='div2'><img id="myImage-$i-2" width="$width" height="$width" src="$imgpath$demon_url[2]" onload="tracedemon_$i(2)"></div>
+        <div id='div3'><img id="myImage-$i-3" width="$width" height="$width" src="$imgpath$demon_url[3]" onload="tracedemon_$i(3)"></div>
+        <div id='div4'><img id="myImage-$i-4" width="$width" height="$width" src="$imgpath$demon_url[4]" onload="tracedemon_$i(4)"></div>
+        <p><small>$i:</small> $demon_name
+        <br><small><small> $filter </small></small></p>
 </div>
-
 EOP;
 
         return $demon;
@@ -343,7 +342,7 @@ function planet_gen() {
 			$v1	= mt_rand(1,5) / 10;
 			$filter = ".ink($v1)"; break;
                 case 8:
-			$min	= 1; $max = 3;
+			$min	= 1; $max = 4;
                         $v1a    = mt_rand($min,$max) / 10;
                         $v1b    = mt_rand($min,$max) / 10;
                         $v2a    = mt_rand($min,$max) / 10;
@@ -372,9 +371,9 @@ function planet_gen() {
 function demon_ini() {
 
         global $demonname_ini, $demonname_mid, $demonname_end, $demon_pic;
-        $demonname_ini = array("a","ve","y");
-        $demonname_mid = array("an","u","xi");
-        $demonname_end = array("a","vi","vos");
+        $demonname_ini = array("a","an","as","az","ba","bal","be","bel","del","dra","du","e","go","gri","hex","i","lu","ka","kar","kor","me","mel","mor","nar","ra","sa");
+        $demonname_mid = array("bad","bi","bra","ci","da","de","fa","fri","for","gi","gra","gri","hu","la","las","li","mai","mo","mu","phis","pho","ra","su","ta","tel","va","vi","yan","za");
+        $demonname_end = array("al","bam","bi","bub","bus","den","don","el","gor","goth","jag","ka","kor","ku","lak","leth","lia","mat","met","mon","moth","ra","riel","rog","roth","s","t","tan","th","tor","xas","zal","zel","zer","zo");
 
 } // end function demon_ini
 
@@ -396,12 +395,51 @@ function demon_gen() {
                         $demon_name = $demonname_ini[(mt_rand(1,1000) % count($demonname_ini))] . $demonname_mid[(mt_rand(1,1000) % count($demonname_mid))] . $demonname_end[(mt_rand(1,1000) % count($demonname_end))];
         }
 
+// demon filter
+        $filter = "";
+        switch(mt_rand(1,9)){
+                case 1:
+                        $v1     = mt_rand(3,6) / 10;
+                        $filter = ".noise($v1)"; break;
+                case 2:
+                        $v1     = mt_rand(10,100) / 100;
+                        $filter = ".sepia($v1)"; break;
+                case 3:
+                        $v1     = mt_rand(1,5);
+                        $v2     = mt_rand(1,5);
+                        $filter = ".unsharpMask($v1,$v2)"; break;
+                case 4:
+                        $v1     = mt_rand(-10,10) / 10;
+                        $filter = ".vibrance($v1)"; break;
+                case 5 || 6 || 7 || 8:
+                        $min    = 2; $max = 5;
+                        $v1a    = mt_rand($min,$max) / 10;
+                        $v1b    = mt_rand($min,$max) / 10;
+                        $v2a    = mt_rand($min,$max) / 10;
+                        $v2b    = mt_rand($min,$max) / 10;
+                        $v3a    = mt_rand($min,$max) / 10;
+                        $v3b    = mt_rand($min,$max) / 10;
+                        $curves = "";
+                        switch(mt_rand(1,3)){
+                                case 1:
+                                        $curves = "[[$v1a,$v1b],[$v2a,$v2b]],[[0,0],[1,1]],[[0,0],[1,1]]"; break;
+                                case 2:
+                                        $curves = "[[0,0],[1,1]],[[$v1a,$v1b],[$v2a,$v2b]],[[0,0],[1,1]]"; break;
+                                case 3:
+                                        $curves = "[[0,0],[1,1]],[[0,0],[1,1]],[[$v1a,$v1b],[$v2a,$v2b]]"; break;
+                        }
+                        $filter = ".curves($curves)"; break;
+                default;
+
+        }
+
+        $demon[3]      = $filter;
+
 // demon name
         $demon[0]      = $demon_name;
 
 // demon pic
-        $demon[1]      = demon_layers($layerdir);
-
+        $demon[1]      = demon_layers($layerdir); // 5 mt_rand
 
 // demon size
         $demon[2]      = mt_rand(50,200);
