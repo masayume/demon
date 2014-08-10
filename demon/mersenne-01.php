@@ -1,7 +1,9 @@
 <?php
 
 // TODO
-// other objects (type param)
+// scenes (type param)
+// particles: http://aerotwist.com/tutorials/creating-particles-with-three-js/
+// demon data (power, energy, attack type)
 // planet data
 // http://stackoverflow.com/questions/667045/getpixel-from-html-canvas
 
@@ -66,7 +68,7 @@ $javascript
 EOT;
 
 // navigation && MAIN div
-	print " NAVIGATION: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;" . "<a href='" .$_SERVER['PHP_SELF'] . "?seed=" . $master_seed . "&page=" . $prevp . $res_qs . "'> &lt;&lt; previous </a> &nbsp;&nbsp;&nbsp; <a href='" . $_SERVER['PHP_SELF'] . "?seed=" . $master_seed . "&page=" .$nextp . $res_qs . "'> next >> </a> &nbsp;  &nbsp;  &nbsp;  &nbsp;  &nbsp; <a href='" . $_SERVER['PHP_SELF'] . "?seed=" . $master_seed . "&page=" .$nextp . "&type=planets'>PLANETS</a>  &nbsp;  &nbsp;  &nbsp;  &nbsp;  &nbsp; <a href='" . $_SERVER['PHP_SELF'] . "?seed=" . $master_seed . "&page=" .$nextp . "&type=demons&results=3'>DEMONS</a>  &nbsp;  &nbsp;  &nbsp;  &nbsp;  &nbsp; <a href='" . $_SERVER['PHP_SELF'] . "?seed=" . $master_seed . "&page=" .$nextp . "&type=backs'>BACKGROUNDS</a>"; 
+	print " NAVIGATION: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;" . "<a href='" .$_SERVER['PHP_SELF'] . "?seed=" . $master_seed . "&page=" . $prevp . $res_qs . "'> &lt;&lt; previous </a> &nbsp;&nbsp;&nbsp; <a href='" . $_SERVER['PHP_SELF'] . "?seed=" . $master_seed . "&page=" .$nextp . $res_qs . "'> next >> </a> &nbsp;  &nbsp;  &nbsp;  &nbsp;  &nbsp; <a href='" . $_SERVER['PHP_SELF'] . "?seed=" . $master_seed . "&page=" .$nextp . "&type=planets'>PLANETS</a>  &nbsp;  &nbsp;  &nbsp;  &nbsp;  &nbsp; <a href='" . $_SERVER['PHP_SELF'] . "?seed=" . $master_seed . "&page=" .$nextp . "&type=demons&results=3'>DEMONS</a>  &nbsp;  &nbsp;  &nbsp;  &nbsp;  &nbsp; <a href='" . $_SERVER['PHP_SELF'] . "?seed=" . $master_seed . "&page=" .$nextp . "&type=backs&results=3'>BACKGROUNDS</a>"; 
 	print "\n\n\n\n<hr><div style=\"text-align:center;\">";
 
 // PLANETS
@@ -102,7 +104,7 @@ EOT;
 
 				$demon_name 	= $demon_array[0];
 				$demon_url 	= $demon_array[1];
-				$width		= 128;
+				$width 		= $demon_array[2];
 				$filter		= $demon_array[3];
 				// echo $demon_img;
 				echo demon($i, $imgpath, $demon_url, $demon_name, $width, $filter);
@@ -132,8 +134,9 @@ EOT;
                 }
         } // end backgrounds
 
-	print "</div><hr>";
+	print "</div><br/><br/><br/<br/<br/<br/>>>><hr>";
 	print "ini: " . count($planetname_ini) . "  mid:" . count($planetname_mid) ."  end:" . count($planetname_end);
+	print " === " . demon_count($layerdir);
 	print "</body></html>";
 
 echo "\n";
@@ -144,6 +147,35 @@ exit(0);
 // = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = -
 // = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = -
 // = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = - = -
+
+function demon_count($dir) {
+
+	$dpart = "";	$dcount = 1;
+        $dlayers        = array();
+        $arr2ret        = array();
+        if ($handle = opendir($dir)) {
+
+            while (false !== ($entry = readdir($handle))) {
+                if ($entry != "." && $entry != "..") {
+                        array_push($dlayers, $entry);
+                        // echo "$entry\n";
+                }
+            }
+            closedir($handle);
+        }
+
+// create various parts 
+        foreach (array("LW", "RW", "LB", "BO", "HE") as $part) {
+                $demon_elems    = array();
+                $demon_elems    = kind_elem($part, $dlayers); // elementi di tipo "HE"... 
+		if (in_array($part, array("RW", "BO", "LB", "HE"))) { $dpart .= " $part: " . count($demon_elems); $dcount *= count($demon_elems); }
+	}
+
+	$demoncount = "demons: " . $dcount . " parts: " . $dpart;
+
+	return $demoncount;
+
+} // end function demon_count
 
 function demon_layers($dir) {
 
@@ -161,10 +193,9 @@ function demon_layers($dir) {
 	}
 
 // create various parts	
-	foreach (array("LW", "RW", "BO", "LB", "HE") as $part) {
+	foreach (array("LW", "RW", "LB", "BO", "HE") as $part) {
 		$demon_elems	= array();
 		$demon_elems 	= kind_elem($part, $dlayers); // elementi di tipo "HE"... 
-
 		array_push($arr2ret, $demon_elems[(mt_rand(1,1000) % count($demon_elems))]); // carico nell'array da tornare l'rt_rnd-esimo elemento
 	}
 
@@ -181,8 +212,6 @@ function kind_elem($kind, $dlayers) {
 	$arr2ret  = array();
         foreach ($dlayers as $dlayer) { 
 		if (strstr($dlayer, $kind)) { array_push($arr2ret, $dlayer); } }
-	
-
 
 	return $arr2ret;
 
@@ -398,9 +427,6 @@ function demon_gen() {
 // demon filter
         $filter = "";
         switch(mt_rand(1,9)){
-                case 1:
-                        $v1     = mt_rand(3,6) / 10;
-                        $filter = ".noise($v1)"; break;
                 case 2:
                         $v1     = mt_rand(10,100) / 100;
                         $filter = ".sepia($v1)"; break;
@@ -411,8 +437,9 @@ function demon_gen() {
                 case 4:
                         $v1     = mt_rand(-10,10) / 10;
                         $filter = ".vibrance($v1)"; break;
-                case 5 || 6 || 7 || 8:
-                        $min    = 2; $max = 5;
+                case 1 || 5 || 6 || 7 || 8:
+/*
+                        $min    = 1; $max = 7;
                         $v1a    = mt_rand($min,$max) / 10;
                         $v1b    = mt_rand($min,$max) / 10;
                         $v2a    = mt_rand($min,$max) / 10;
@@ -420,6 +447,7 @@ function demon_gen() {
                         $v3a    = mt_rand($min,$max) / 10;
                         $v3b    = mt_rand($min,$max) / 10;
                         $curves = "";
+
                         switch(mt_rand(1,3)){
                                 case 1:
                                         $curves = "[[$v1a,$v1b],[$v2a,$v2b]],[[0,0],[1,1]],[[0,0],[1,1]]"; break;
@@ -427,7 +455,29 @@ function demon_gen() {
                                         $curves = "[[0,0],[1,1]],[[$v1a,$v1b],[$v2a,$v2b]],[[0,0],[1,1]]"; break;
                                 case 3:
                                         $curves = "[[0,0],[1,1]],[[0,0],[1,1]],[[$v1a,$v1b],[$v2a,$v2b]]"; break;
-                        }
+*/
+				$carray = array(
+						"[[0,0],[1,1]],[[0,0],[1,1]],[[0.1,0.4],[0.6,0.6]]", 
+						"[[0,0],[1,1]],[[0,0],[1,1]],[[0.1,0.1],[0.3,0.6]]", 
+						"[[0,0],[1,1]],[[0,0],[1,1]],[[0.2,0.2],[0.5,0.2]]", 
+						"[[0,0],[1,1]],[[0,0],[1,1]],[[0.3,0.1],[0.3,0.2]]", 
+						"[[0,0],[1,1]],[[0,0],[1,1]],[[0.4,0.2],[0.1,0.4]]", 
+						"[[0,0],[1,1]],[[0,0],[1,1]],[[0.5,0.4],[0.7,0.2]]", 
+						"[[0,0],[1,1]],[[0,0],[1,1]],[[0.6,0.1],[0.4,0.5]]", 
+						"[[0,0],[1,1]],[[0.3,0.5],[0.3,0.7]],[[0,0],[1,1]]", 
+						"[[0,0],[1,1]],[[0.3,0.1],[0.7,0.4]],[[0,0],[1,1]]", 
+						"[[0,0],[1,1]],[[0.4,0.5],[0.3,0.1]],[[0,0],[1,1]]", 
+						"[[0.3,0.2],[0.3,0.7]],[[0,0],[1,1]],[[0,0],[1,1]]", 
+						"[[0.4,0.6],[0.6,0.7]],[[0,0],[1,1]],[[0,0],[1,1]]", 
+						"[[0.6,0.2],[0.5,0.1]],[[0,0],[1,1]],[[0,0],[1,1]]", 
+						"[[0.6,0.1],[0.6,0.4]],[[0,0],[1,1]],[[0,0],[1,1]]", 
+						"[[0.6,0.1],[0.4,0.4]],[[0,0],[1,1]],[[0,0],[1,1]]", 
+						"[[0,0],[1,1]],[[0.6,0.1],[0.4,0.4]],[[0.3,0.5],[0.3,0.7]]",
+						"[[0.6,0.1],[0.4,0.4]],[[0,0],[1,1]],[[0.3,0.5],[0.3,0.7]]",
+						"[[0.6,0.1],[0.4,0.4]],[[0.3,0.5],[0.3,0.7]],[[0,0],[1,1]]",
+						);
+				$curves = $carray[(mt_rand(1,1000) % count($carray))]; 
+                        // }
                         $filter = ".curves($curves)"; break;
                 default;
 
@@ -442,7 +492,7 @@ function demon_gen() {
         $demon[1]      = demon_layers($layerdir); // 5 mt_rand
 
 // demon size
-        $demon[2]      = mt_rand(50,200);
+        $demon[2]      = mt_rand(120,136);
 
 	return $demon;
 
