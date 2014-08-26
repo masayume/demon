@@ -1,7 +1,11 @@
 <?php
 
 // TODO
+// :122 dir parameter: test (&dir=./demon/img/scenes/, &dir=./gen/img/cardrogue, &dir=./gen/img/pixelchars) 
+// example URL: http://localhost:8888/mersenne-02.php?seed=100&page=7&results=3&dir=./demon/img/prove/
+// webGL canvas filter switch
 // parametrize type layer sequence (zNN)
+// JSON: http://php.net/manual/en/function.json-decode.php
 
 // particles: http://aerotwist.com/tutorials/creating-particles-with-three-js/
 // planet data
@@ -10,7 +14,7 @@
 
 // DONE
 // http://www.html5rocks.com/en/tutorials/canvas/imagefilters/
-// dir parameter: test (&dir=/demon/img/scenes/) 
+// :175 modified padding of the elements ( file names containing up, down, left and right pixel adjustments with format: -u15- | -d20- & -r20- | -l15- )
 
 // REF.
 // http://superpixeltime.com/
@@ -42,6 +46,8 @@ else {
         $scenedir = $params['dir'];
         $res_qs  .= "&dir=" . $scenedir;
 }
+
+// print "scenedir: " . $scenedir;
 
 // init master seed
 mt_srand($master_seed);
@@ -79,7 +85,8 @@ EOT;
 
         if ($type == "backs") {
       		for ($i=1; $i<=$page * $results; $i++) {
-                        $imgpath = "/demon/img/scenes/" ;
+                        // $imgpath = "/demon/img/scenes/" ;
+                        $imgpath = $scenedir ;
 			$scene_array = array();
                         $scene_array = scene_gen();
 
@@ -98,7 +105,6 @@ EOT;
         } // end backgrounds
 
 	print "</div><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><hr>";
-	print "ini: " . count($planetname_ini) . "  mid:" . count($planetname_mid) ."  end:" . count($planetname_end);
 	print "</body></html>";
 
 echo "\n";
@@ -163,10 +169,24 @@ function scene($i, $imgpath, $scene_url, $scene_name, $width, $filter) {
 	if (!$filter) { $filter = "&nbsp;"; }
 	$divs = "";
 	for ($j=0; $j<6; $j++ ) {
+		$padding = "";
 
-		// non aggiungere un div se non è valorizzato $scene_url[$j]
+		// calculate padding displacement from $scene_url[$j] filename sections: up: -uNN- down: -dNN- left: -lNN- right: -rNN- 
+		foreach (array("/-u[0-9]+-/", "/-d[0-9]+-/", "/-l[0-9]+-/", "/-r[0-9]+-/", ) as $pattern) {	
+			preg_match($pattern, $scene_url[$j], $matches, PREG_OFFSET_CAPTURE);
+			if ($matches[0]) {  
+				// print "<br>matches for $pattern: <pre>"; print_r($matches[0][0]); 
+				if (substr($matches[0][0],1,1 ) == 'u') { $padding .= "margin-top: -" . substr($matches[0][0],2,2 ) . "; "; }
+				if (substr($matches[0][0],1,1 ) == 'd') { $padding .= "margin-top: +" . substr($matches[0][0],2,2 ) . "; "; }
+				if (substr($matches[0][0],1,1 ) == 'l') { $padding .= "margin-left: -" . substr($matches[0][0],2,2 ) . "; "; }
+				if (substr($matches[0][0],1,1 ) == 'r') { $padding .= "margin-left: +" . substr($matches[0][0],2,2 ) . "; "; }
+			}
+			
+		}
+
+		// layer div is actually added only if it exists: $scene_url[$j]
 		if ($scene_url[$j]) {
-			$divs .= "<div id='div$j' style=\"margin-top: -35px;\"><img id=\"myImage-$i-$j\" width=\"$width\" height=\"$width\" src=\"$imgpath$scene_url[$j]\" onload=\"tracescene_$i($j)\"></div>";
+			$divs .= "\n<div id='div$j' style=\"$padding \"><img id=\"myImage-$i-$j\" width=\"$width\" height=\"$width\" src=\"$imgpath$scene_url[$j]\" onload=\"tracescene_$i($j)\"></div>";
 		}
 	}
 
@@ -187,14 +207,6 @@ function scene($i, $imgpath, $scene_url, $scene_name, $width, $filter) {
             }
         </script>
 	$divs
-<!--
-        <div id='div0' style="margin-top: -35px;"><img id="myImage-$i-0" width="$width" height="$width" src="$imgpath$scene_url[0]" onload="tracescene_$i(0)"></div>
-        <div id='div1' style="margin-top: -35px;"><img id="myImage-$i-1" width="$width" height="$width" src="$imgpath$scene_url[1]" onload="tracescene_$i(1)"></div>
-        <div id='div2' style="margin-top: -35px;"><img id="myImage-$i-2" width="$width" height="$width" src="$imgpath$scene_url[2]" onload="tracescene_$i(2)"></div>
-        <div id='div3' style="margin-top: -35px;"><img id="myImage-$i-3" width="$width" height="$width" src="$imgpath$scene_url[3]" onload="tracescene_$i(3)"></div>
-        <div id='div4' style="margin-top: -35px;"><img id="myImage-$i-4" width="$width" height="$width" src="$imgpath$scene_url[4]" onload="tracescene_$i(4)"></div>
-        <div id='div5' style="margin-top: -35px;"><img id="myImage-$i-5" width="$width" height="$width" src="$imgpath$scene_url[5]" onload="tracescene_$i(5)"></div>
--->
 		<small><p><small>$i:</small> $scene_name
         	<small><small><br> $filter </small></small></p></small>
 </div>
@@ -310,8 +322,6 @@ function scene_gen() {
 
 // scene name
         $scene[0]      = $scene_name;
-
-print "scene_layers: scene_layers($scenedir)";
 
 // scene pic
         $scene[1]      = scene_layers($scenedir); // 5 mt_rand
