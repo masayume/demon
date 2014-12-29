@@ -3,6 +3,7 @@
 // TODO
 // scenes (type param)
 
+// >>> :240 write JSON
 // >>> :245: array z0N global & scene layers built from this
 // >>> facultative/mandatory layers
 
@@ -224,17 +225,42 @@ function demon_layers($dir) {
 function scene_layers($dir) {
 
         $dlayers        = array();
+	$hlayers	= array();
         $arr2ret        = array();
         if ($handle = opendir($dir)) {
 
             while (false !== ($entry = readdir($handle))) {
                 if ($entry != "." && $entry != "..") {
-                        array_push($dlayers, $entry);
-                        // echo "$entry\n";
+
+			$file_parts = pathinfo($entry);
+
+// compila il contenuto del JSON
+			if (($file_parts['extension'] == 'jpg') || ($file_parts['extension'] == 'png')) {
+				// trovare l'elemento zNN 
+				$fileparts = explode("-", $entry);
+				foreach ($fileparts as $fpart) {		
+					if (substr($fpart, 0, 1) == 'z') {
+						$zlayer = $fpart;
+						#            "layer" => "part" 
+						$hl = array( $zlayer => $entry );
+						array_push($hlayers, $hl);
+					}
+				}
+
+                        	array_push($dlayers, $entry);
+
+                        	// echo "$entry\n";
+			}
                 }
             }
             closedir($handle);
         }
+
+// write JSON with dlayers data
+//	$hlayers	= '{backs:[' . $hlayers . ']}';
+	$jlayers 	= json_encode($hlayers);
+	$jfile		= $dir . "scene.json"; 
+	file_put_contents($jfile, $jlayers);
 
 // create various parts 
 // BACKGROUNDS - background layers (chance to appear, type) 
@@ -661,18 +687,18 @@ function scene_gen() {
                                                 "[[0,0],[1,1]],[[0,0],[1,1]],[[0.3,0.1],[0.3,0.2]]",
                                                 "[[0,0],[1,1]],[[0,0],[1,1]],[[0.4,0.2],[0.1,0.4]]",
                                                 "[[0,0],[1,1]],[[0,0],[1,1]],[[0.5,0.4],[0.7,0.2]]",
-                                                "[[0,0],[1,1]],[[0,0],[1,1]],[[0.6,0.1],[0.4,0.5]]",
+                                                "[[0,0],[1,1]],[[0,0],[1,1]],[[0.6,0.1],[0.3,0.1]]",
                                                 "[[0,0],[1,1]],[[0.3,0.5],[0.3,0.7]],[[0,0],[1,1]]",
                                                 "[[0,0],[1,1]],[[0.3,0.1],[0.7,0.4]],[[0,0],[1,1]]",
                                                 "[[0,0],[1,1]],[[0.4,0.5],[0.3,0.1]],[[0,0],[1,1]]",
-                                                "[[0.3,0.2],[0.3,0.7]],[[0,0],[1,1]],[[0,0],[1,1]]",
+                                                "[[0.3,0.2],[0.3,0.6]],[[0,0],[1,1]],[[0,0],[1,1]]",
                                                 "[[0.4,0.6],[0.6,0.7]],[[0,0],[1,1]],[[0,0],[1,1]]",
                                                 "[[0.6,0.2],[0.5,0.1]],[[0,0],[1,1]],[[0,0],[1,1]]",
                                                 "[[0.6,0.1],[0.6,0.4]],[[0,0],[1,1]],[[0,0],[1,1]]",
                                                 "[[0.6,0.1],[0.4,0.4]],[[0,0],[1,1]],[[0,0],[1,1]]",
-                                                "[[0,0],[1,1]],[[0.6,0.1],[0.4,0.4]],[[0.3,0.5],[0.3,0.7]]",
-                                                "[[0.6,0.1],[0.4,0.4]],[[0,0],[1,1]],[[0.3,0.5],[0.3,0.7]]",
-                                                "[[0.6,0.1],[0.4,0.4]],[[0.3,0.5],[0.3,0.7]],[[0,0],[1,1]]",
+//                                                "[[0,0],[1,1]],[[0.6,0.1],[0.4,0.4]],[[0.3,0.5],[0.3,0.7]]",
+//                                                "[[0.6,0.1],[0.4,0.4]],[[0,0],[1,1]],[[0.3,0.5],[0.3,0.7]]",
+                                                "[[0.6,0.1],[0.3,0.2]],[[0.3,0.5],[0.3,0.6]],[[0,0],[1,1]]",
                                                 );
 
                                 $curves = $carray[(mt_rand(1,1000) % count($carray))];
